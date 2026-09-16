@@ -94,6 +94,14 @@ priority: "Low" | "Medium" | "High" | "Critical";
  *
  * ============================================================================
  */
+https://github.com/srinivas321123/L1-interview_starter_files.git
+
+/**
+ * ============================================================================
+ * Exercise 1 - Deployment Card
+ * ============================================================================
+ */
+
 import {
   Card,
   CardContent,
@@ -107,8 +115,122 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-const DeploymentCard = () => {
-  return <div>DeploymentCard</div>;
+export interface Deployment {
+  id: string;
+  application: string;
+  version: string;
+  environment: "Production" | "QA" | "Development" | "Staging";
+  status: "Pending" | "In Progress" | "Completed";
+  requestedBy: string;
+  requestedAt: string;
+  scheduledAt: string;
+  region: string;
+  priority: "Low" | "Medium" | "High" | "Critical";
+}
+
+interface DeploymentCardProps {
+  deployment: Deployment;
+  onAdvanceStatus?: (deployment: Deployment) => void;
+}
+
+const nextStatus: Record<
+  Deployment["status"],
+  Deployment["status"] | null
+> = {
+  Pending: "In Progress",
+  "In Progress": "Completed",
+  Completed: null,
+};
+
+const DeploymentCard = ({
+  deployment,
+  onAdvanceStatus,
+}: DeploymentCardProps) => {
+  const next = nextStatus[deployment.status];
+
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <CardTitle>{deployment.application}</CardTitle>
+
+            <CardDescription>
+              {deployment.id} · {deployment.version}
+            </CardDescription>
+          </div>
+
+          <Badge variant="outline">
+            {deployment.environment}
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <Separator />
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p className="text-muted-foreground">Status</p>
+            <Badge className="mt-1">
+              {deployment.status}
+            </Badge>
+          </div>
+
+          <div>
+            <p className="text-muted-foreground">Priority</p>
+            <p className="font-medium">{deployment.priority}</p>
+          </div>
+
+          <div>
+            <p className="text-muted-foreground">Region</p>
+            <p className="font-medium">{deployment.region}</p>
+          </div>
+
+          <div>
+            <p className="text-muted-foreground">Requested By</p>
+            <p className="font-medium">{deployment.requestedBy}</p>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-1 text-sm">
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">
+              Requested
+            </span>
+            <span>
+              {new Date(deployment.requestedAt).toLocaleString()}
+            </span>
+          </div>
+
+          <div className="flex justify-between gap-2">
+            <span className="text-muted-foreground">
+              Scheduled
+            </span>
+            <span>
+              {new Date(deployment.scheduledAt).toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter>
+        <Button
+          className="w-full"
+          disabled={!next}
+          onClick={() => {
+            if (next) {
+              onAdvanceStatus?.(deployment);
+            }
+          }}
+        >
+          {next ? `Advance to ${next}` : "Deployment Completed"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 };
 
 export default DeploymentCard;
