@@ -127,10 +127,131 @@ import { useQuery } from "@tanstack/react-query";
  * DeploymentCard[]
  */
 
-export default function Example3() {
- // This is a placeholder component to demonstrate the usage of the useQuery hook.
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-  return <div className="container mx-auto p-6">
-    // You can use the useQuery hook to fetch deployments and display them using the DeploymentCard component.
-  </div>;
+import { data } from "@/data/MOCK_DATA";
+import DeploymentCard, {
+  type Deployment,
+} from "./example1";
+import { useDeploymentFilters } from "./example2";
+
+const fetchDeployments = async (): Promise<Deployment[]> => {
+  return data as Deployment[];
+};
+
+type StatusFilter =
+  | "All"
+  | "Pending"
+  | "In Progress"
+  | "Completed"
+  | "Failed";
+
+export default function Example3() {
+  const [statusFilter, setStatusFilter] =
+    useState<StatusFilter>("All");
+
+  const {
+    data: deployments = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["deployments"],
+    queryFn: fetchDeployments,
+  });
+
+  const {
+    search,
+    setSearch,
+    filteredDeployments,
+  } = useDeploymentFilters(deployments);
+
+  const visibleDeployments = filteredDeployments.filter(
+    (deployment) =>
+      statusFilter === "All" ||
+      deployment.status === statusFilter
+  );
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <p>Loading deployments...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto p-6">
+        <p className="text-red-500">
+          Failed to load deployments.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <main className="container mx-auto space-y-6 p-6">
+      <div>
+        <h1 className="text-3xl font-bold">
+          Deployment Queue
+        </h1>
+
+        <p className="text-muted-foreground">
+          Monitor and manage application deployments
+        </p>
+      </div>
+
+      <div className="rounded-lg border p-4">
+        <p className="text-sm text-muted-foreground">
+          Total Deployments
+        </p>
+
+        <p className="text-2xl font-bold">
+          {deployments.length}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4 md:flex-row">
+        <input
+          type="text"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search applications..."
+          className="w-full rounded-md border px-3 py-2 outline-none focus:ring-2 md:flex-1"
+        />
+
+        <select
+          value={statusFilter}
+          onChange={(event) =>
+            setStatusFilter(event.target.value as StatusFilter)
+          }
+          className="rounded-md border px-3 py-2"
+        >
+          <option value="All">All</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Failed">Failed</option>
+        </select>
+      </div>
+
+      {visibleDeployments.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-10 text-center">
+          <p className="text-muted-foreground">
+            No deployments found.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleDeployments.map((deployment) => (
+            <DeploymentCard
+              key={deployment.id}
+              deployment={deployment}
+            />
+          ))}
+        </div>
+      )}
+    </main>
+  );
 }
